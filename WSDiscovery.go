@@ -1,9 +1,10 @@
-package WS_Discovery
+package WSDiscovery
 
 import (
+	"strings"
+
 	"github.com/beevik/etree"
 	"github.com/yakovlevdmv/gosoap"
-	"strings"
 )
 
 func buildProbeMessage(uuidV4 string, scopes, types []string, nmsp map[string]string) gosoap.SoapMessage {
@@ -13,13 +14,8 @@ func buildProbeMessage(uuidV4 string, scopes, types []string, nmsp map[string]st
 	//namespaces["d"] = "http://schemas.xmlsoap.org/ws/2005/04/discovery"
 
 	probeMessage := gosoap.NewEmptySOAP()
-	
-	probeMessage.AddRootNamespaces(namespaces)
-	//if len(nmsp) != 0 {
-	//	probeMessage.AddRootNamespaces(nmsp)
-	//}
 
-	//fmt.Println(probeMessage.String())
+	probeMessage.AddRootNamespaces(namespaces)
 
 	//Содержимое Head
 	var headerContent []*etree.Element
@@ -49,7 +45,7 @@ func buildProbeMessage(uuidV4 string, scopes, types []string, nmsp map[string]st
 		typesTag := etree.NewElement("d:Types")
 		if len(nmsp) != 0 {
 			for key, value := range nmsp {
-				typesTag.CreateAttr("xmlns:" + key, value)
+				typesTag.CreateAttr("xmlns:"+key, value)
 			}
 		}
 		typesTag.CreateAttr("xmlns:d", "http://schemas.xmlsoap.org/ws/2005/04/discovery")
