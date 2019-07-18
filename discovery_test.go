@@ -22,12 +22,12 @@ func TestDiscovery(t *testing.T) {
 			continue
 		}
 
-		addrs, err := Discovery(&iface)
+		devices, err := Discovery(&iface)
 		if err != nil {
 			t.Error(err)
 		}
-		if len(addrs) > 0 {
-			t.Log(addrs)
+		if len(devices) > 0 {
+			t.Logf("%+v", devices)
 			return
 		}
 	}
