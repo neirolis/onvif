@@ -11,8 +11,7 @@ import (
 )
 
 type Device struct {
-	IPv4     net.IP
-	IPv6     net.IP
+	XAddr    string
 	Hardware string
 	Name     string
 	Location string
@@ -33,12 +32,15 @@ func Discovery(iface *net.Interface) (devices []Device, err error) {
 			continue
 		}
 
-		ipv4, ipv6 := lookupXaddrs(doc)
+		addr, ok := lookupXaddr(doc)
+		if !ok {
+			continue
+		}
+
 		hardware, name, location := lookupScopes(doc)
 
 		devices = append(devices, Device{
-			IPv4:     ipv4,
-			IPv6:     ipv6,
+			XAddr:    addr,
 			Hardware: hardware,
 			Name:     name,
 			Location: location,
@@ -49,23 +51,19 @@ func Discovery(iface *net.Interface) (devices []Device, err error) {
 }
 
 // lookup xaddrs by path ./Body/ProbeMatches/ProbeMatch/XAddrs
-// ex: <d:XAddrs>http://${IPv4-addr}/onvif/device_service http://[${IPv6-addr}]/onvif/device_service</d:XAddrs>
-func lookupXaddrs(doc *etree.Document) (ipv4, ipv6 net.IP) {
+// ex: <d:XAddrs>http://${IPv4-addr}/onvif/device_service http://[${IPv6-addr}]/onvif/device_service  ... </d:XAddrs>
+func lookupXaddr(doc *etree.Document) (xaddr string, ok bool) {
 	elem := doc.Root().FindElement("./Body/ProbeMatches/ProbeMatch/XAddrs")
 
-	for _, xaddr := range strings.Split(elem.Text(), " ") {
-		u, err := url.Parse(xaddr)
+	for _, onvifurl := range strings.Split(elem.Text(), " ") {
+		u, err := url.Parse(onvifurl)
 		if err != nil {
 			continue
 		}
 
-		ip := net.ParseIP(u.Hostname())
-		switch {
-		case ip.To4() != nil:
-			ipv4 = ip
-		case ip.To16() != nil:
-			ipv6 = ip
-		}
+		xaddr = u.Hostname()
+		ok = true
+		break
 	}
 
 	return
