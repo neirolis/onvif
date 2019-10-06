@@ -92,7 +92,7 @@ func buildProbeMessage(uuidV4 string, scopes, types []string, nmsp map[string]st
 func sendUDPMulticast(iface *net.Interface, msg []byte) (result []string, err error) {
 	group := net.IPv4(239, 255, 255, 250)
 
-	c, err := net.ListenPacket("udp4", "0.0.0.0:1024")
+	c, err := net.ListenPacket("udp4", "0.0.0.0:0")
 	if err != nil {
 		return nil, err
 	}
