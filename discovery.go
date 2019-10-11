@@ -1,9 +1,11 @@
 package onvif
 
 import (
+	"bytes"
 	"net"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/beevik/etree"
@@ -17,7 +19,7 @@ type Device struct {
 	Location string
 }
 
-//Discovery onvif devices by type NetworkVideoTransmitter
+// Discovery onvif devices by type NetworkVideoTransmitter
 func Discovery(iface *net.Interface) (devices []Device, err error) {
 	msg := buildProbeMessage(uuid.New().String(), nil, []string{"dn:NetworkVideoTransmitter"}, map[string]string{"dn": "http://www.onvif.org/ver10/network/wsdl"})
 
@@ -39,6 +41,10 @@ func Discovery(iface *net.Interface) (devices []Device, err error) {
 
 		hardware, name, location := lookupScopes(doc)
 
+		// remove from name hardware value
+		name = strings.Replace(name, hardware, "", -1)
+		name = strings.TrimSpace(name)
+
 		devices = append(devices, Device{
 			XAddr:    addr,
 			Hardware: hardware,
@@ -46,6 +52,13 @@ func Discovery(iface *net.Interface) (devices []Device, err error) {
 			Location: location,
 		})
 	}
+
+	sort.Slice(devices, func(i, j int) bool {
+		ip1 := net.ParseIP(devices[i].XAddr)
+		ip2 := net.ParseIP(devices[j].XAddr)
+
+		return bytes.Compare(ip1, ip2) < 0
+	})
 
 	return
 }
@@ -80,12 +93,14 @@ func lookupScopes(doc *etree.Document) (hardware, name, location string) {
 			continue
 		}
 
+		upath := strings.ToLower(u.Path)
+
 		switch {
-		case strings.Contains(u.Path, "hardware"):
+		case strings.Contains(upath, "hardware"):
 			_, hardware = path.Split(u.Path)
-		case strings.Contains(u.Path, "name"):
+		case strings.Contains(upath, "name"):
 			_, name = path.Split(u.Path)
-		case strings.Contains(u.Path, "location"):
+		case strings.Contains(upath, "location"):
 			_, location = path.Split(u.Path)
 		}
 	}
