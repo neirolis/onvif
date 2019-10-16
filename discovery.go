@@ -67,6 +67,9 @@ func Discovery(iface *net.Interface) (devices []Device, err error) {
 // ex: <d:XAddrs>http://${IPv4-addr}/onvif/device_service http://[${IPv6-addr}]/onvif/device_service  ... </d:XAddrs>
 func lookupXaddr(doc *etree.Document) (xaddr string, ok bool) {
 	elem := doc.Root().FindElement("./Body/ProbeMatches/ProbeMatch/XAddrs")
+	if elem == nil {
+		return
+	}
 
 	for _, onvifurl := range strings.Split(elem.Text(), " ") {
 		u, err := url.Parse(onvifurl)
@@ -86,6 +89,9 @@ func lookupXaddr(doc *etree.Document) (xaddr string, ok bool) {
 // ex: <d:Scopes>onvif://www.onvif.org/type/video_encoder onvif://www.onvif.org/hardware/DS-2CD2042WD-I onvif://www.onvif.org/name/HIKVISION%20DS-2CD2042WD-I</d:Scopes>
 func lookupScopes(doc *etree.Document) (hardware, name, location string) {
 	elem := doc.Root().FindElement("./Body/ProbeMatches/ProbeMatch/Scopes")
+	if elem == nil {
+		return
+	}
 
 	for _, scope := range strings.Split(elem.Text(), " ") {
 		u, err := url.Parse(scope)
